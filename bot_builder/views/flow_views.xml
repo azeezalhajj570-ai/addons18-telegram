@@ -1,0 +1,40 @@
+<odoo>
+    <record id="view_telegram_flow_form" model="ir.ui.view">
+        <field name="name">telegram.flow.form</field>
+        <field name="model">telegram.flow</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="bot_id"/>
+                        <field name="trigger"/>
+                        <field name="message"/>
+                        <field name="keyboard_type" widget="radio"/>
+                    </group>
+                    <notebook>
+                        <page string="Buttons">
+                            <field name="button_ids">
+                                <list editable="bottom">
+                                    <field name="text"/>
+                                    <field name="callback_data"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_telegram_flow" model="ir.actions.act_window">
+        <field name="name">Flows</field>
+        <field name="res_model">telegram.flow</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="telegram_flow_menu"
+              parent="telegram_root_menu"
+              name="Flows"
+              action="action_telegram_flow"/>
+</odoo>

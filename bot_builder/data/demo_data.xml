@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Demo Bot -->
+    <record id="demo_feedback_bot" model="telegram.bot">
+        <field name="name">Customer Feedback Bot</field>
+        <field name="token">7973146148:AAGPp5h08eGOOogzT2M_JT9otxC9XsLrQ6U</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- START FLOW -->
+    <record id="flow_feedback_start" model="telegram.flow">
+        <field name="name">Start Feedback Flow</field>
+        <field name="bot_id" ref="demo_feedback_bot"/>
+        <field name="trigger">/start</field>
+        <field name="message">
+            Hi there! How would you rate your recent experience with our service?
+        </field>
+    </record>
+
+    <!-- THANK YOU FLOW -->
+    <record id="flow_thank_you" model="telegram.flow">
+        <field name="name">Thank You Flow</field>
+        <field name="bot_id" ref="demo_feedback_bot"/>
+        <field name="trigger">feedback_thank_you</field>
+        <field name="message">
+            Thank you for your feedback! We appreciate you taking the time to help us improve.
+        </field>
+    </record>
+
+    <!-- BUTTONS -->
+    <record id="btn_good" model="telegram.button">
+        <field name="flow_id" ref="flow_feedback_start"/>
+        <field name="text">👍 Good</field>
+        <field name="callback_data">feedback_thank_you</field>
+    </record>
+
+    <record id="btn_neutral" model="telegram.button">
+        <field name="flow_id" ref="flow_feedback_start"/>
+        <field name="text">😐 Neutral</field>
+        <field name="callback_data">feedback_thank_you</field>
+    </record>
+
+    <record id="btn_bad" model="telegram.button">
+        <field name="flow_id" ref="flow_feedback_start"/>
+        <field name="text">👎 Bad</field>
+        <field name="callback_data">feedback_thank_you</field>
+    </record>
+
+    <!-- ======================================================== -->
+    <!-- ADVANCED MENU BOT PROTOTYPE -->
+    <!-- ======================================================== -->
+    <record id="demo_advanced_bot" model="telegram.bot">
+        <field name="name">Advanced Menu Bot</field>
+        <field name="token">123456789:ABCdefGHIjklMNOpqrsTUVwxyz</field>
+        <field name="active">True</field>
+    </record>
+
+    <!-- MAIN MENU FLOW -->
+    <record id="flow_adv_main_menu" model="telegram.flow">
+        <field name="name">Advanced: Main Menu</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">/start</field>
+        <field name="message">Welcome! Please choose an option:</field>
+        <field name="keyboard_type">reply</field>
+    </record>
+
+    <record id="btn_adv_products" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_main_menu"/>
+        <field name="text">📦 Products</field>
+    </record>
+
+    <record id="btn_adv_support" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_main_menu"/>
+        <field name="text">🛠 Support</field>
+    </record>
+
+    <record id="btn_adv_about" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_main_menu"/>
+        <field name="text">ℹ️ About Us</field>
+    </record>
+
+    <!-- PRODUCTS FLOW (Inline Example) -->
+    <record id="flow_adv_products" model="telegram.flow">
+        <field name="name">Advanced: Products</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">📦 Products</field>
+        <field name="message">Here are our top products:</field>
+        <field name="keyboard_type">inline</field>
+    </record>
+
+    <record id="btn_adv_prod_a" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_products"/>
+        <field name="text">Product A ($10)</field>
+        <field name="callback_data">prod_a</field>
+    </record>
+
+    <record id="btn_adv_prod_b" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_products"/>
+        <field name="text">Product B ($20)</field>
+        <field name="callback_data">prod_b</field>
+    </record>
+
+    <record id="btn_adv_back_products" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_products"/>
+        <field name="text">🔙 Main Menu</field>
+        <field name="callback_data">/start</field>
+    </record>
+
+    <!-- SUPPORT FLOW (Inline Example) -->
+    <record id="flow_adv_support" model="telegram.flow">
+        <field name="name">Advanced: Support</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">🛠 Support</field>
+        <field name="message">How can we help?</field>
+        <field name="keyboard_type">inline</field>
+    </record>
+
+    <record id="btn_adv_contact" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_support"/>
+        <field name="text">📞 Contact Agent</field>
+        <field name="callback_data">contact_agent</field>
+    </record>
+
+    <record id="btn_adv_back_support" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_support"/>
+        <field name="text">🔙 Main Menu</field>
+        <field name="callback_data">/start</field>
+    </record>
+
+    <!-- ABOUT US FLOW (Reply Example) -->
+    <record id="flow_adv_about" model="telegram.flow">
+        <field name="name">Advanced: About Us</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">ℹ️ About Us</field>
+        <field name="message">We are a bot building company! 🤖</field>
+        <field name="keyboard_type">reply</field>
+    </record>
+
+    <record id="btn_adv_back_about" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_about"/>
+        <field name="text">🔙 Main Menu</field>
+    </record>
+
+    <!-- BACK TO MAIN MENU (Triggered by '🔙 Main Menu' text from Reply Keyboard) -->
+    <record id="flow_adv_back_main" model="telegram.flow">
+        <field name="name">Advanced: Back to Main</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">🔙 Main Menu</field>
+        <field name="message">Main Menu:</field>
+        <field name="keyboard_type">reply</field>
+    </record>
+
+    <!-- Re-using the same buttons structure as Main Menu for the 'Back' flow -->
+    <record id="btn_adv_products_back" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_back_main"/>
+        <field name="text">📦 Products</field>
+    </record>
+
+    <record id="btn_adv_support_back" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_back_main"/>
+        <field name="text">🛠 Support</field>
+    </record>
+
+    <record id="btn_adv_about_back" model="telegram.button">
+        <field name="flow_id" ref="flow_adv_back_main"/>
+        <field name="text">ℹ️ About Us</field>
+    </record>
+
+</odoo>

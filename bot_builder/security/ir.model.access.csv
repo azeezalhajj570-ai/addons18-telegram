@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_telegram_bot_manager,telegram.bot manager,model_telegram_bot,bot_builder.group_bot_manager,1,1,1,1
+access_telegram_webhook_manager,telegram.webhook manager,model_telegram_webhook,bot_builder.group_bot_manager,1,1,1,1
+access_telegram_flow_manager,telegram.flow manager,model_telegram_flow,bot_builder.group_bot_manager,1,1,1,1
+access_telegram_button_manager,telegram.button manager,model_telegram_button,bot_builder.group_bot_manager,1,1,1,1
