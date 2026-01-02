@@ -203,7 +203,7 @@
     <!-- 1. Product (Fixed) -->
     <record id="mapping_expense_product" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
-        <field name="field_id" ref="hr_expense.field_hr_expense__product_id"/>
+        <field name="field_id" search="[('model', '=', 'hr.expense'), ('name', '=', 'product_id')]"/>
         <field name="value_type">fixed</field>
         <field name="fixed_value" ref="product_expense_bot"/>
     </record>
@@ -211,7 +211,7 @@
     <!-- 2. Unit Price (Ask User) -->
     <record id="mapping_expense_amount" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
-        <field name="field_id" ref="hr_expense.field_hr_expense__unit_amount"/>
+        <field name="field_id" search="[('model', '=', 'hr.expense'), ('name', '=', 'unit_amount')]"/>
         <field name="value_type">ask</field>
         <field name="question">How much did you spend?</field>
         <field name="sequence">20</field>
@@ -220,7 +220,7 @@
     <!-- 3. Description (Ask User) -->
     <record id="mapping_expense_name" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
-        <field name="field_id" ref="hr_expense.field_hr_expense__name"/>
+        <field name="field_id" search="[('model', '=', 'hr.expense'), ('name', '=', 'name')]"/>
         <field name="value_type">ask</field>
         <field name="question">What is this expense for?</field>
         <field name="sequence">10</field>
