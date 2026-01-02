@@ -208,20 +208,22 @@
         <field name="fixed_value" ref="product_expense_bot"/>
     </record>
 
-    <!-- 2. Unit Price (Dynamic 1st Arg) -->
-    <!-- <record id="mapping_expense_amount" model="telegram.flow.mapping">
+    <!-- 2. Unit Price (Ask User) -->
+    <record id="mapping_expense_amount" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
         <field name="field_id" ref="hr_expense.field_hr_expense__unit_amount"/>
-        <field name="value_type">dynamic</field>
-        <field name="dynamic_key">1</field>
-    </record> -->
+        <field name="value_type">ask</field>
+        <field name="question">How much did you spend?</field>
+        <field name="sequence">20</field>
+    </record>
 
-    <!-- 3. Description (Dynamic 2nd Arg) -->
+    <!-- 3. Description (Ask User) -->
     <record id="mapping_expense_name" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
         <field name="field_id" ref="hr_expense.field_hr_expense__name"/>
-        <field name="value_type">dynamic</field>
-        <field name="dynamic_key">2</field>
+        <field name="value_type">ask</field>
+        <field name="question">What is this expense for?</field>
+        <field name="sequence">10</field>
     </record>
 
 </odoo>
