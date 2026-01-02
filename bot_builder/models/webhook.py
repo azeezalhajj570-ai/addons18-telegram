@@ -34,6 +34,9 @@ class TelegramWebhook(models.Model):
 
     def _compute_url(self):
         base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        if base_url and base_url.startswith('http://'):
+             base_url = base_url.replace('http://', 'https://', 1)
+
         for webhook in self:
             if webhook.bot_id:
                 webhook.url = f"{base_url}/telegram/webhook/{webhook.bot_id.id}"

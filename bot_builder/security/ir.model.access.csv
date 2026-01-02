@@ -4,3 +4,4 @@ access_telegram_webhook_manager,telegram.webhook manager,model_telegram_webhook,
 access_telegram_flow_manager,telegram.flow manager,model_telegram_flow,bot_builder.group_bot_manager,1,1,1,1
 access_telegram_button_manager,telegram.button manager,model_telegram_button,bot_builder.group_bot_manager,1,1,1,1
 access_telegram_flow_mapping_manager,telegram.flow.mapping manager,model_telegram_flow_mapping,bot_builder.group_bot_manager,1,1,1,1
+access_telegram_session_manager,telegram.session manager,model_telegram_session,bot_builder.group_bot_manager,1,1,1,1
