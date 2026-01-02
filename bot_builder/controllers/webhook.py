@@ -112,11 +112,13 @@ class TelegramWebhook(http.Controller):
             elif flow.action_type == 'create' and flow.model_id:
                 # Check if we need to ask questions
                 ask_mappings = flow.field_mapping_ids.filtered(lambda m: m.value_type == 'ask').sorted(key=lambda m: m.sequence)
+                _logger.info("Found %d ask_mappings for flow %s. Mappings: %s", len(ask_mappings), flow.name, ask_mappings)
                 
                 if ask_mappings:
                     # START SESSION
                     try:
                         first_question = ask_mappings[0].question or f"Please provide {ask_mappings[0].field_id.name}"
+                        _logger.info("Starting session with question: %s", first_question)
                         request.env["telegram.session"].sudo().create({
                             'chat_id': chat_id,
                             'flow_id': flow.id,
@@ -131,6 +133,7 @@ class TelegramWebhook(http.Controller):
                         final_text += "\n(Error starting interactive session)"
 
                 else:
+                    _logger.info("No ask_mappings found. Proceeding with one-shot creation.")
                     try:
                         vals = {}
                         
@@ -160,6 +163,7 @@ class TelegramWebhook(http.Controller):
 
                         # Basic Validation for required fields
                         if not vals:
+                             _logger.warning("No data provided for creation. Vals is empty.")
                              final_text += "\n(Error: No data provided for creation)"
                         else:
                             request.env[flow.model_id.model].sudo().create(vals)
