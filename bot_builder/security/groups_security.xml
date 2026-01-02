@@ -11,6 +11,7 @@
             <field name="name">Bot Manager</field>
             <field name="category_id" ref="bot_builder.module_category_telegram_bot_builder"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
             <field name="comment">The user will be able to create, edit, and manage all aspects of Telegram bots.</field>
         </record>
     </data>

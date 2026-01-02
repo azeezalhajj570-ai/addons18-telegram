@@ -80,52 +80,47 @@
         <field name="text">ℹ️ About Us</field>
     </record>
 
-    <!-- PRODUCTS FLOW (Inline Example) -->
+    <!-- PRODUCTS FLOW (Reply Example) -->
     <record id="flow_adv_products" model="telegram.flow">
         <field name="name">Advanced: Products</field>
         <field name="bot_id" ref="demo_advanced_bot"/>
         <field name="trigger">📦 Products</field>
-        <field name="message">Here are our top products:</field>
-        <field name="keyboard_type">inline</field>
+        <field name="message">Here are our top products (Reply Keyboard):</field>
+        <field name="keyboard_type">reply</field>
     </record>
 
     <record id="btn_adv_prod_a" model="telegram.button">
         <field name="flow_id" ref="flow_adv_products"/>
         <field name="text">Product A ($10)</field>
-        <field name="callback_data">prod_a</field>
     </record>
 
     <record id="btn_adv_prod_b" model="telegram.button">
         <field name="flow_id" ref="flow_adv_products"/>
         <field name="text">Product B ($20)</field>
-        <field name="callback_data">prod_b</field>
     </record>
 
     <record id="btn_adv_back_products" model="telegram.button">
         <field name="flow_id" ref="flow_adv_products"/>
         <field name="text">🔙 Main Menu</field>
-        <field name="callback_data">/start</field>
     </record>
 
-    <!-- SUPPORT FLOW (Inline Example) -->
+    <!-- SUPPORT FLOW (Reply Example) -->
     <record id="flow_adv_support" model="telegram.flow">
         <field name="name">Advanced: Support</field>
         <field name="bot_id" ref="demo_advanced_bot"/>
         <field name="trigger">🛠 Support</field>
-        <field name="message">How can we help?</field>
-        <field name="keyboard_type">inline</field>
+        <field name="message">How can we help? (Reply Keyboard)</field>
+        <field name="keyboard_type">reply</field>
     </record>
 
     <record id="btn_adv_contact" model="telegram.button">
         <field name="flow_id" ref="flow_adv_support"/>
         <field name="text">📞 Contact Agent</field>
-        <field name="callback_data">contact_agent</field>
     </record>
 
     <record id="btn_adv_back_support" model="telegram.button">
         <field name="flow_id" ref="flow_adv_support"/>
         <field name="text">🔙 Main Menu</field>
-        <field name="callback_data">/start</field>
     </record>
 
     <!-- ABOUT US FLOW (Reply Example) -->
@@ -151,6 +146,19 @@
         <field name="keyboard_type">reply</field>
     </record>
 
+    <!-- QUERY DEMO FLOW -->
+    <record id="flow_query_products" model="telegram.flow">
+        <field name="name">Query: List Products</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">/products</field>
+        <field name="action_type">query</field>
+        <field name="model_id" ref="product.model_product_template"/>
+        <field name="model_field_id" ref="product.field_product_template__name"/>
+        <field name="record_limit">5</field>
+        <field name="message">Here are proper products:</field>
+        <field name="keyboard_type">inline</field>
+    </record>
+
     <!-- Re-using the same buttons structure as Main Menu for the 'Back' flow -->
     <record id="btn_adv_products_back" model="telegram.button">
         <field name="flow_id" ref="flow_adv_back_main"/>
@@ -165,6 +173,55 @@
     <record id="btn_adv_about_back" model="telegram.button">
         <field name="flow_id" ref="flow_adv_back_main"/>
         <field name="text">ℹ️ About Us</field>
+    </record>
+
+    <!-- ======================================================== -->
+    <!-- EXPENSE TRACKING DEMO                                  -->
+    <!-- ======================================================== -->
+    
+    <!-- Expense Product -->
+    <record id="product_expense_bot" model="product.product">
+        <field name="name">Bot Expense</field>
+        <field name="standard_price">1.0</field>
+        <field name="list_price">1.0</field>
+        <field name="type">service</field>
+        <field name="default_code">BOT_EXP</field>
+    </record>
+
+    <!-- Expense Flow: /expense <amount> <description> -->
+    <record id="flow_create_expense" model="telegram.flow">
+        <field name="name">Create: Expense</field>
+        <field name="bot_id" ref="demo_advanced_bot"/>
+        <field name="trigger">/expense</field>
+        <field name="action_type">create</field>
+        <field name="model_id" ref="hr_expense.model_hr_expense"/>
+        <field name="message">Expense Recorded Successfully!</field>
+        <field name="keyboard_type">inline</field>
+    </record>
+
+    <!-- Mappings -->
+    <!-- 1. Product (Fixed) -->
+    <record id="mapping_expense_product" model="telegram.flow.mapping">
+        <field name="flow_id" ref="flow_create_expense"/>
+        <field name="field_id" ref="hr_expense.field_hr_expense__product_id"/>
+        <field name="value_type">fixed</field>
+        <field name="fixed_value" ref="product_expense_bot"/>
+    </record>
+
+    <!-- 2. Unit Price (Dynamic 1st Arg) -->
+    <!-- <record id="mapping_expense_amount" model="telegram.flow.mapping">
+        <field name="flow_id" ref="flow_create_expense"/>
+        <field name="field_id" ref="hr_expense.field_hr_expense__unit_amount"/>
+        <field name="value_type">dynamic</field>
+        <field name="dynamic_key">1</field>
+    </record> -->
+
+    <!-- 3. Description (Dynamic 2nd Arg) -->
+    <record id="mapping_expense_name" model="telegram.flow.mapping">
+        <field name="flow_id" ref="flow_create_expense"/>
+        <field name="field_id" ref="hr_expense.field_hr_expense__name"/>
+        <field name="value_type">dynamic</field>
+        <field name="dynamic_key">2</field>
     </record>
 
 </odoo>

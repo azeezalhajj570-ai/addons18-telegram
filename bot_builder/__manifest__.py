@@ -4,7 +4,7 @@
     "category": "Tools",
     "summary": "Build Telegram bots with menus and buttons",
     "author": "Your Name",
-    "depends": ["base"],
+    "depends": ["base", "product", "hr_expense"],
     "data": [
         "security/groups_security.xml",
         "security/ir.model.access.csv",

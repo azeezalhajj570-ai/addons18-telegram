@@ -2,6 +2,7 @@ import logging
 import requests
 from odoo import http
 from odoo.http import request
+from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
 
@@ -53,20 +54,94 @@ class TelegramWebhook(http.Controller):
             return {"ok": True}
 
         flow = request.env["telegram.flow"].sudo().search([
-            ("bot_id", "=", bot.id),
-            ("trigger", "=", trigger)
-        ], limit=1)
-
-        if flow:
+            ("bot_id", "=", bot.id)
+        ])
+        
+        # Simple split matching for commands with arguments
+        matched_flow = None
+        for f in flow:
+            if trigger == f.trigger:
+                matched_flow = f
+                break
+            if f.trigger.startswith("/") and trigger.startswith(f.trigger + " "):
+                matched_flow = f
+                break
+        
+        if matched_flow:
+            flow = matched_flow
             _logger.info("Found flow '%s' for trigger '%s'.", flow.name, trigger)
-            self.send_message(bot.token, chat_id, flow)
+            
+            final_text = flow.message or ""
+            
+            if flow.action_type == 'query' and flow.model_id:
+                try:
+                    domain = safe_eval(flow.domain_filter or "[]")
+                    records = request.env[flow.model_id.model].sudo().search(domain, limit=flow.record_limit)
+                    field_name = flow.model_field_id.name
+                    
+                    items = []
+                    for record in records:
+                        val = record[field_name]
+                        if val:
+                             items.append(str(val))
+                    
+                    if items:
+                        final_text += "\n" + "\n".join(items)
+                    else:
+                        final_text += "\n(No records found)"
+                except Exception as e:
+                    _logger.error("Error executing query for flow %s: %s", flow.name, e)
+                    final_text += "\n(Error fetching data)"
+
+            elif flow.action_type == 'create' and flow.model_id:
+                try:
+                    vals = {}
+                    
+                    # Split trigger arguments: "/expense 100 Lunch" -> ["/expense", "100", "Lunch"]
+                    # We might need to respect quotes later, but let's stick to simple split for now
+                    parts = trigger.split()
+                    
+                    # Try to set employee_id for expenses automatically
+                    if flow.model_id.model == 'hr.expense':
+                         employee = self._get_employee(bot, chat_id)
+                         if employee:
+                             vals['employee_id'] = employee.id
+                    
+                    for mapping in flow.field_mapping_ids:
+                        if mapping.value_type == 'fixed':
+                            vals[mapping.field_id.name] = mapping.fixed_value
+                        elif mapping.value_type == 'dynamic' and mapping.dynamic_key:
+                            try:
+                                idx = int(mapping.dynamic_key)
+                                if idx < len(parts):
+                                    vals[mapping.field_id.name] = parts[idx]
+                            except (ValueError, IndexError):
+                                _logger.warning("Invalid dynamic key or index out of range: %s", mapping.dynamic_key)
+
+                    # Ensure 'name' (Description) is present for hr.expense
+                    if flow.model_id.model == 'hr.expense' and 'name' not in vals:
+                        vals['name'] = "Expense via Bot"
+
+                    # Basic Validation for required fields
+                    if not vals:
+                         final_text += "\n(Error: No data provided for creation)"
+                    else:
+                        request.env[flow.model_id.model].sudo().create(vals)
+                        final_text += "\n(Record Created Successfully)"
+                except Exception as e:
+                    # IMPORTANT: Rollback to avoid transaction break issues when logging/sending response
+                    request.env.cr.rollback()
+                    _logger.error("Error creating record for flow %s: %s", flow.name, e)
+                    final_text += f"\n(Error creating record: {e})"
+
+            self.send_message(bot.token, chat_id, flow, final_text=final_text)
         else:
             _logger.info("No flow found for trigger '%s'.", trigger)
 
         return {"ok": True}
 
     # --- SEND MESSAGE WITH INLINE BUTTONS ---
-    def send_message(self, token, chat_id, flow):
+    def send_message(self, token, chat_id, flow, final_text=None):
         reply_markup = None
         if flow.keyboard_type == 'inline':
             keyboard = []
@@ -102,7 +177,7 @@ class TelegramWebhook(http.Controller):
 
         payload = {
             "chat_id": chat_id,
-            "text": flow.message,
+            "text": final_text or flow.message,
             "reply_markup": reply_markup
         }
 
@@ -121,3 +196,10 @@ class TelegramWebhook(http.Controller):
             },
             timeout=5
         )
+
+    def _get_employee(self, bot, chat_id):
+        # TODO: Implement a way to link Telegram ID to Odoo User/Employee
+        # For now, let's assume the bot is used by the admin or try to find by some logic in future
+        # In a real app, we'd look up a res.users with 'telegram_chat_id' = chat_id
+        # For this demo, let's just pick the first employee or the admin's employee
+        return request.env['hr.employee'].sudo().search([], limit=1)

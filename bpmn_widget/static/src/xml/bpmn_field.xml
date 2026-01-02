@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="bpmn_widget.BPMNField">
+        <div class="o_bpmn_field" t-att-style="style" t-ref="bpmnContainer">
+            <div class="bpmn-canvas" style="width: 100%; height: 100%;"></div>
+        </div>
+    </t>
+</templates>

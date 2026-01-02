@@ -9,10 +9,28 @@
                         <field name="name"/>
                         <field name="bot_id"/>
                         <field name="trigger"/>
-                        <field name="message"/>
+                        <field name="action_type" widget="radio"/>
+                        <field name="message" string="Message / Header"/>
+                        
+                        <!-- Query Fields -->
+                        <field name="model_id" invisible="action_type == 'text'" required="action_type in ('query', 'create')"/>
+                        <field name="model_field_id" invisible="action_type != 'query'" required="action_type == 'query'"/>
+                        <field name="domain_filter" invisible="action_type != 'query'"/>
+                        <field name="record_limit" invisible="action_type != 'query'"/>
+
                         <field name="keyboard_type" widget="radio"/>
                     </group>
                     <notebook>
+                        <page string="Field Mappings" invisible="action_type != 'create'">
+                            <field name="field_mapping_ids">
+                                <list editable="bottom">
+                                    <field name="field_id"/>
+                                    <field name="value_type"/>
+                                    <field name="fixed_value" invisible="value_type != 'fixed'" required="value_type == 'fixed'"/>
+                                    <field name="dynamic_key" invisible="value_type != 'dynamic'" required="value_type == 'dynamic'"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Buttons">
                             <field name="button_ids">
                                 <list editable="bottom">
