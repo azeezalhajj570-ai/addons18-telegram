@@ -52,7 +52,7 @@
     <!-- ======================================================== -->
     <record id="demo_advanced_bot" model="telegram.bot">
         <field name="name">Advanced Menu Bot</field>
-        <field name="token">123456789:ABCdefGHIjklMNOpqrsTUVwxyz</field>
+        <field name="token">7973146148:AAGPp5h08eGOOogzT2M_JT9otxC9XsLrQ6U</field>
         <field name="active">True</field>
     </record>
 
@@ -208,12 +208,12 @@
         <field name="fixed_value" ref="product_expense_bot"/>
     </record>
 
-    <!-- 2. Unit Price (Ask User) -->
+    <!-- 2. Quantity (Ask User) -->
     <record id="mapping_expense_amount" model="telegram.flow.mapping">
         <field name="flow_id" ref="flow_create_expense"/>
-        <field name="field_id" search="[('model', '=', 'hr.expense'), ('name', '=', 'unit_amount')]"/>
+        <field name="field_id" search="[('model', '=', 'hr.expense'), ('name', '=', 'quantity')]"/>
         <field name="value_type">ask</field>
-        <field name="question">How much did you spend?</field>
+        <field name="question">How many items?</field>
         <field name="sequence">20</field>
     </record>
 

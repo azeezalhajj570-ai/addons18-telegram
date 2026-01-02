@@ -88,6 +88,7 @@ class TelegramWebhook(http.Controller):
             _logger.info("Found flow '%s' for trigger '%s'.", flow.name, trigger)
             
             final_text = flow.message or ""
+            _logger.info("Flow Debug - Action: %s, Model: %s", flow.action_type, flow.model_id)
             
             if flow.action_type == 'query' and flow.model_id:
                 try:
