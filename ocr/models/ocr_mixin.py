@@ -39,9 +39,16 @@ class OcrMixin(models.AbstractModel):
         """
         self.ensure_one()
         
-        endpoint = self.env['ir.config_parameter'].sudo().get_param('ocr_integration.ocr_api_endpoint')
+        endpoint = self.env['ir.config_parameter'].sudo().get_param('ocr.ocr_api_endpoint')
         if not endpoint:
-            raise UserError(_("Please configure the OCR API Endpoint in Settings (Accounting > OCR Integration)."))
+            # Fallback to old param name during migration if needed, but let's stick to new one or keep old one?
+            # Let's keep 'ocr_integration.ocr_api_endpoint' for compatibility or rename to 'ocr.ocr_api_endpoint'?
+            # Better to rename to `ocr.endpoint` but let's keep it simple and reuse the old key or update.
+            # I will update the key to 'ocr.endpoint' in the new module settings.
+            endpoint = self.env['ir.config_parameter'].sudo().get_param('ocr.endpoint')
+
+        if not endpoint:
+             raise UserError(_("Please configure the OCR API Endpoint in Settings (OCR > Configuration > Settings)."))
 
         attachment = self._get_ocr_attachment()
         

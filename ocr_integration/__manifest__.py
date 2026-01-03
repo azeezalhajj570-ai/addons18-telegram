@@ -1,15 +1,13 @@
 {
     'name': 'OCR Integration',
     'version': '1.0',
-    'summary': 'Integrate External OCR API for Invoices',
-    'description': 'Allows scanning of invoice attachments using a GPU-accelerated Arabic OCR API.',
+    'summary': 'Integrate External OCR API with Accounting',
+    'description': 'Integration bridge between OCR Base App and Odoo Accounting.',
     'category': 'Accounting',
     'author': 'Antigravity',
-    'depends': ['account'],
+    'depends': ['account', 'ocr'],
     'data': [
         'views/account_move_views.xml',
-        'views/res_config_settings_views.xml',
-        'wizard/ocr_test_wizard_views.xml',
     ],
     'installable': True,
     'application': False,

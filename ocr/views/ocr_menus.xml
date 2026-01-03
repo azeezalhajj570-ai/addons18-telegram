@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top-level Menu -->
+    <menuitem id="menu_ocr_root"
+              name="OCR"
+              web_icon="ocr,static/description/icon.png"
+              sequence="10"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_ocr_config"
+              name="Configuration"
+              parent="menu_ocr_root"
+              sequence="100"/>
+              
+    <!-- Settings Menu -->
+    <menuitem id="menu_ocr_settings"
+              name="Settings"
+              parent="menu_ocr_config"
+              action="action_ocr_config_settings"
+              sequence="0"/>
+</odoo>

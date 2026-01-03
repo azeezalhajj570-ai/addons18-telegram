@@ -33,7 +33,7 @@
 
     <menuitem id="menu_ocr_test_wizard"
               name="Test OCR"
-              parent="account.menu_finance_configuration"
+              parent="menu_ocr_root"
               action="action_ocr_test_wizard"
-              sequence="100"/>
+              sequence="10"/>
 </odoo>
