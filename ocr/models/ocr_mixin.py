@@ -58,7 +58,11 @@ class OcrMixin(models.AbstractModel):
         try:
             file_content = base64.b64decode(attachment.datas)
             files = {
-                'file': (attachment.name, file_content, attachment.mimetype)
+                'file': (
+                    attachment.name or "document", 
+                    file_content, 
+                    attachment.mimetype or "application/octet-stream"
+                )
             }
             
             _logger.info(f"Sending attachment {attachment.id} from {self._name} to OCR Endpoint: {endpoint}")
