@@ -8,8 +8,8 @@
     'depends': ['base', 'web'],
     'data': [
         'security/ir.model.access.csv',
-        'views/ocr_menus.xml',
         'views/res_config_settings_views.xml',
+        'views/ocr_menus.xml',
         'wizard/ocr_test_wizard_views.xml',
     ],
     'installable': True,
