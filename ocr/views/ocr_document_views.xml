@@ -33,8 +33,14 @@
                         <!-- Left Column: Document Preview -->
                         <div class="col-md-6">
                             <label for="file" string="Document"/>
-                            <!-- Use pdf_viewer for PDF support, generic binary for others -->
-                            <field name="file" filename="filename" widget="pdf_viewer"/>
+                            <field name="mimetype" invisible="1"/>
+                            <!-- Image Viewer: Full Width, no Avatar class -->
+                            <field name="file" widget="image" options="{'size': [0, 0]}" invisible="mimetype != 'image'" nolabel="1" style="width: 100%; max-height: 800px; object-fit: contain; display: block;"/>
+                            <!-- PDF Viewer -->
+                            <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" nolabel="1"/>
+                            <!-- Fallback for others -->
+                            <field name="file" filename="filename" invisible="mimetype in ['image', 'pdf']" nolabel="1"/>
+                            
                             <field name="filename" invisible="1"/>
                         </div>
                         

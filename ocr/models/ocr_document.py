@@ -9,6 +9,24 @@ class OcrDocument(models.Model):
     name = fields.Char(string="Document Name", required=True, default="New Scan")
     file = fields.Binary(string="File", required=True, attachment=True)
     filename = fields.Char(string="Filename")
+    mimetype = fields.Char(string="Mime Type", compute='_compute_mimetype', store=True)
+
+    @api.depends('filename', 'file')
+    def _compute_mimetype(self):
+        for record in self:
+            if record.filename:
+                # Basic extension check or use mimetypes lib if needed.
+                # Odoo's binary fields often store mimetype in attachment, but we need it on the record for the view.
+                # Let's rely on simple extension check for the view logic.
+                name = record.filename.lower()
+                if name.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                    record.mimetype = 'image'
+                elif name.endswith('.pdf'):
+                    record.mimetype = 'pdf'
+                else:
+                    record.mimetype = 'other'
+            else:
+                record.mimetype = 'other'
     
     def _get_ocr_attachment(self):
         """
