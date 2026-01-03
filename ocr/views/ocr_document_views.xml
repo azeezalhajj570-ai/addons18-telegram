@@ -32,16 +32,21 @@
                     <div class="row">
                         <!-- Left Column: Document Preview -->
                         <div class="col-md-6">
-                            <label for="file" string="Document"/>
-                            <field name="mimetype" invisible="1"/>
-                            <!-- Image Viewer: Full Width, no Avatar class -->
-                            <field name="file" widget="image" options="{'size': [0, 0]}" invisible="mimetype != 'image'" nolabel="1" style="width: 100%; max-height: 800px; object-fit: contain; display: block;"/>
-                            <!-- PDF Viewer -->
-                            <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" nolabel="1"/>
-                            <!-- Fallback for others -->
-                            <field name="file" filename="filename" invisible="mimetype in ['image', 'pdf']" nolabel="1"/>
-                            
-                            <field name="filename" invisible="1"/>
+                            <notebook>
+                                <page string="Original">
+                                    <field name="mimetype" invisible="1"/>
+                                    <!-- Image Viewer -->
+                                    <field name="file" widget="image" options="{'size': [0, 0]}" invisible="mimetype != 'image'" nolabel="1" style="width: 100%; max-height: 800px; object-fit: contain; display: block;"/>
+                                    <!-- PDF Viewer -->
+                                    <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" nolabel="1"/>
+                                    <!-- Fallback -->
+                                    <field name="file" filename="filename" invisible="mimetype in ['image', 'pdf']" nolabel="1"/>
+                                    <field name="filename" invisible="1"/>
+                                </page>
+                                <page string="Visual Overlay" invisible="not annotated_file">
+                                    <field name="annotated_file" widget="image" options="{'size': [0, 0]}" nolabel="1" style="width: 100%; max-height: 800px; object-fit: contain; display: block;"/>
+                                </page>
+                            </notebook>
                         </div>
                         
                         <!-- Right Column: Results -->
