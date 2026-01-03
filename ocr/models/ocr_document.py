@@ -1,14 +1,15 @@
 from odoo import models, fields, api, _
-import base64
 
-class OcrTestWizard(models.TransientModel):
-    _name = 'ocr.test.wizard'
+class OcrDocument(models.Model):
+    _name = 'ocr.document'
     _inherit = 'ocr.mixin'
-    _description = 'OCR Test Wizard'
+    _description = 'OCR Document'
+    _order = 'create_date desc'
 
+    name = fields.Char(string="Document Name", required=True, default="New Scan")
     file = fields.Binary(string="File", required=True, attachment=True)
     filename = fields.Char(string="Filename")
-
+    
     def _get_ocr_attachment(self):
         """
         Override to use the binary field 'file' as the attachment.
@@ -23,17 +24,6 @@ class OcrTestWizard(models.TransientModel):
 
     def action_scan_ocr(self):
         """
-        Override to reload the wizard view after scanning so results appear.
+        Override to mostly just call super, but ensure we save first if needed.
         """
-        # Call mixin implementation
-        super().action_scan_ocr()
-        
-        # Return action to re-open the same wizard, which forces a reload of the data
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-            'name': 'Test OCR Results',
-        }
+        return super().action_scan_ocr()
