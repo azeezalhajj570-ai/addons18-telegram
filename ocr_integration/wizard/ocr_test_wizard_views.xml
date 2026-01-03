@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ocr_test_wizard_form" model="ir.ui.view">
+        <field name="name">ocr.test.wizard.form</field>
+        <field name="model">ocr.test.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Test OCR">
+                <sheet>
+                    <group>
+                        <field name="file" filename="filename"/>
+                        <field name="filename" invisible="1"/>
+                    </group>
+                    <group string="Results">
+                         <field name="ocr_confidence"/>
+                         <field name="ocr_raw_text"/>
+                         <field name="ocr_json_response"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_scan_ocr" string="Scan" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ocr_test_wizard" model="ir.actions.act_window">
+        <field name="name">Test OCR</field>
+        <field name="res_model">ocr.test.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_ocr_test_wizard"
+              name="Test OCR"
+              parent="account.menu_finance_configuration"
+              action="action_ocr_test_wizard"
+              sequence="100"/>
+</odoo>
