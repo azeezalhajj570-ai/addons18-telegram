@@ -20,3 +20,20 @@ class OcrTestWizard(models.TransientModel):
             ('res_field', '=', 'file')
         ], limit=1)
         return attachment
+
+    def action_scan_ocr(self):
+        """
+        Override to reload the wizard view after scanning so results appear.
+        """
+        # Call mixin implementation
+        super().action_scan_ocr()
+        
+        # Return action to re-open the same wizard, which forces a reload of the data
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'target': 'new',
+            'name': 'Test OCR Results',
+        }
