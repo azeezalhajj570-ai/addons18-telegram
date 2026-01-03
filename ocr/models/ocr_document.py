@@ -42,6 +42,13 @@ class OcrDocument(models.Model):
 
     def action_scan_ocr(self):
         """
-        Override to mostly just call super, but ensure we save first if needed.
+        Override to force a view reload so the results appear immediately.
         """
-        return super().action_scan_ocr()
+        # Call super to perform the scan
+        super().action_scan_ocr()
+        
+        # Return reload action to refresh the form
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
