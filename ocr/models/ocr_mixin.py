@@ -73,7 +73,22 @@ class OcrMixin(models.AbstractModel):
             result = response.json()
             
             # Helper to get text regardless of API response structure
-            text_result = result.get('text') or result.get('content') or str(result)
+            text_result = ""
+            pages = result.get('pages', [])
+            all_text_lines = []
+            
+            # Helper to extract text from pages/items structure
+            if pages:
+                for page in pages:
+                     items = page.get('items', [])
+                     for item in items:
+                         if isinstance(item, dict) and item.get('text'):
+                             all_text_lines.append(item.get('text'))
+                text_result = "\n".join(all_text_lines)
+            
+            # Fallback
+            if not text_result:
+                text_result = result.get('text') or result.get('content') or str(result)
             
             self.write({
                 'ocr_raw_text': text_result,
@@ -94,6 +109,20 @@ class OcrMixin(models.AbstractModel):
                     'sticky': False,
                 }
             }
+
+        except requests.exceptions.HTTPError as e:
+            error_msg = str(e)
+            try:
+                # Try to parse JSON error from server (FastAPI returns 'detail')
+                error_data = e.response.json()
+                if 'detail' in error_data: 
+                    error_msg = error_data['detail']
+            except:
+                # Fallback to text if JSON fails
+                error_msg = e.response.text or str(e)
+            
+            _logger.error(f"OCR Server Error: {error_msg}")
+            raise UserError(_("OCR Server Error: %s") % error_msg)
 
         except Exception as e:
             _logger.error(f"OCR Scan Failed: {e}")
