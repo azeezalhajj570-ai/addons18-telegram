@@ -3,7 +3,9 @@ import base64
 import json
 import io
 import logging
+import requests
 from PIL import Image, ImageDraw
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
