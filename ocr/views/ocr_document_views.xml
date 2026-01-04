@@ -73,7 +73,7 @@
                                 </page>
                                 
                                 <page string="Markdown Source">
-                                    <field name="ocr_markdown" widget="ace" options="{'mode': 'markdown'}" style="min-height: 500px;"/>
+                                    <field name="ocr_markdown" style="font-family: monospace; min-height: 500px;"/>
                                 </page>
                                 
                                 <page string="Raw JSON" groups="base.group_no_one">
