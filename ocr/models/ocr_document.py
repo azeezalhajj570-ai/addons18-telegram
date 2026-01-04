@@ -40,7 +40,7 @@ class OcrDocument(models.Model):
 
     # Output Fields
     ocr_markdown = fields.Text(string="Markdown Source")
-    ocr_visualization_html = fields.Html(string="Visualization HTML")  # For future use if server returns HTML
+    ocr_visualization_html = fields.Html(string="Visualization HTML", sanitize=False)  # For interactive overlay
 
 
     @api.depends('filename', 'file')
@@ -72,44 +72,70 @@ class OcrDocument(models.Model):
         ], limit=1)
         return attachment
 
-    def _draw_boxes(self, image_data, json_data):
+    def _generate_interactive_overlay(self, image_data, json_data):
         """
-        Draw bounding boxes on the image based on OCR results.
-        Handles EXIF orientation and uses semi-transparent highlights.
+        Generate HTML overlay for interactive text selection.
         """
         try:
             image = Image.open(io.BytesIO(image_data))
+            # Fix Orientation first if needed (keep consistent with server results)
+            # The server usually handles this, so we assume image_data matches box coords provided by server.
             
-            # 2. Convert to RGBA for transparency
-            if image.mode != 'RGBA':
-                image = image.convert('RGBA')
-                
-            # 3. Create Overlay Layer
-            overlay = Image.new('RGBA', image.size, (255, 255, 255, 0))
-            draw = ImageDraw.Draw(overlay)
+            width, height = image.size
+            if width == 0 or height == 0: return ""
             
-            # 4. Draw Boxes
+            # Base64 for the image tag
+            b64_img = base64.b64encode(image_data).decode('utf-8')
+            
+            html_parts = []
+            html_parts.append(f'<div style="position: relative; width: 100%; max-width: {width}px; display: inline-block;">')
+            html_parts.append(f'<img src="data:image/png;base64,{b64_img}" style="width: 100%; height: auto; display: block;" />')
+            
             pages = json_data.get('pages', [])
             for page in pages:
                 items = page.get('items', [])
                 for item in items:
                     box = item.get('box')
-                    if box:
-                        points = [tuple(pt) for pt in box]
-                        # Red fill (255, 0, 0) with low opacity (60/255)
-                        # Red outline with full opacity
-                        draw.polygon(points, fill=(255, 0, 0, 60), outline=(255, 0, 0, 200))
-        
-            # 5. Composite and Save
-            image = Image.alpha_composite(image, overlay)
-            image = image.convert('RGB')
+                    text = item.get('text', '')
+                    if box and text:
+                        # Box is [[x,y], [x,y], ...]. Calculate bounding rect.
+                        xs = [pt[0] for pt in box]
+                        ys = [pt[1] for pt in box]
+                        min_x = min(xs)
+                        min_y = min(ys)
+                        w = max(xs) - min_x
+                        h = max(ys) - min_y
+                        
+                        # Percentages for responsive scaling
+                        left_pct = (min_x / width) * 100
+                        top_pct = (min_y / height) * 100
+                        width_pct = (w / width) * 100
+                        height_pct = (h / height) * 100
+                        
+                        style = (
+                            f"position: absolute; "
+                            f"left: {left_pct:.2f}%; "
+                            f"top: {top_pct:.2f}%; "
+                            f"width: {width_pct:.2f}%; "
+                            f"height: {height_pct:.2f}%; "
+                            f"z-index: 10; "
+                            f"cursor: text; "
+                            f"background-color: rgba(255, 0, 0, 0.2); " 
+                            f"color: transparent; "
+                            f"font-size: 10px; line-height: 10px; "
+                            f"user-select: text; "
+                            f"white-space: nowrap; overflow: hidden;"
+                        )
+                        
+                        safe_text = text.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+                        html_parts.append(f'<span style="{style}" title="{safe_text}">{safe_text}</span>')
             
-            output = io.BytesIO()
-            image.save(output, format='JPEG', quality=95)
-            return output.getvalue()
+            html_parts.append('</div>')
+            return "".join(html_parts)
+            
         except Exception as e:
-            _logger.warning(f"Failed to draw boxes: {e}")
-            return None
+            _logger.warning(f"Interactive overlay generation failed: {e}")
+            return ""
 
     def action_scan_ocr(self):
         """
@@ -180,16 +206,16 @@ class OcrDocument(models.Model):
             # If backend logic allows returning boxes, standard overlay might work.
             # But with advanced layout parsing, structure changes.
             # Let's keep logic simple: try to draw boxes if possible, otherwise skip safely.
+            # Generate Interactive Overlay
             if self.mimetype == 'image':
                 try:
-                    # Current overlay expects "pages" list derived from result.
-                    # If result is complex structure {result: {layoutParsingResults: ...}}
-                    # we might need to adapt. For now, catch exception and log.
                     if 'pages' in result:
                          file_data = base64.b64decode(self.file)
-                         annotated = self._draw_boxes(file_data, result)
-                         if annotated:
-                             self.annotated_file = base64.b64encode(annotated)
+                         # Generate HTML overlay
+                         overlay_html = self._generate_interactive_overlay(file_data, result)
+                         self.ocr_visualization_html = overlay_html
+                         # We can also keep annotated_file logic if needed, but HTML takes precedence in UI now.
+                         # self.annotated_file = ... (skipping to save space/performance)
                 except Exception as e:
                     _logger.warning(f"Overlay generation skipped or failed: {e}")
             

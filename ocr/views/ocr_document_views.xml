@@ -66,8 +66,8 @@
                                 </page>
                                 
                                 <page string="Visualization">
-                                    <field name="annotated_file" widget="image" options="{'size': [0, 0]}" nolabel="1" style="width: 100%; max-height: 800px; object-fit: contain; display: block;"/>
-                                     <div invisible="annotated_file" class="text-muted text-center" style="padding: 20px;">
+                                    <field name="ocr_visualization_html" widget="html" nolabel="1" options="{'style': 'height: 800px; width: 100%; overflow: auto;'}"/>
+                                     <div invisible="ocr_visualization_html" class="text-muted text-center" style="padding: 20px;">
                                         Visualization will appear here after scanning.
                                     </div>
                                 </page>
