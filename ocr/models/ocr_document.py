@@ -4,7 +4,7 @@ import json
 import io
 import logging
 import requests
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -75,31 +75,35 @@ class OcrDocument(models.Model):
     def _draw_boxes(self, image_data, json_data):
         """
         Draw bounding boxes on the image based on OCR results.
-        :param image_data: Raw bytes of the image
-        :param json_data: JSON object (dict) from OCR API
-        :return: Raw bytes of annotated image (JPEG) or None
+        Handles EXIF orientation and uses semi-transparent highlights.
         """
         try:
             image = Image.open(io.BytesIO(image_data))
-            # Ensure safe mode for drawing
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-                
-            draw = ImageDraw.Draw(image)
             
-            # API Structure: { "pages": [ { "items": [ { "box": [[x,y]..], "text": ".." } ] } ] }
+            # 2. Convert to RGBA for transparency
+            if image.mode != 'RGBA':
+                image = image.convert('RGBA')
+                
+            # 3. Create Overlay Layer
+            overlay = Image.new('RGBA', image.size, (255, 255, 255, 0))
+            draw = ImageDraw.Draw(overlay)
+            
+            # 4. Draw Boxes
             pages = json_data.get('pages', [])
             for page in pages:
                 items = page.get('items', [])
                 for item in items:
                     box = item.get('box')
                     if box:
-                        # Draw Polygon
-                        # box is usually list of lists: [[x,y], [x,y], [x,y], [x,y]]
-                        # flattening for polygon if needed, but list of tuples/lists works usually
                         points = [tuple(pt) for pt in box]
-                        draw.polygon(points, outline="red", width=3)
+                        # Red fill (255, 0, 0) with low opacity (60/255)
+                        # Red outline with full opacity
+                        draw.polygon(points, fill=(255, 0, 0, 60), outline=(255, 0, 0, 200))
         
+            # 5. Composite and Save
+            image = Image.alpha_composite(image, overlay)
+            image = image.convert('RGB')
+            
             output = io.BytesIO()
             image.save(output, format='JPEG', quality=95)
             return output.getvalue()
