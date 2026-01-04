@@ -138,8 +138,8 @@ class OcrDocument(models.Model):
                             f"box-sizing: border-box; "
                             # Text styling for selection
                             f"color: transparent; "
-                            f"font-size: 1px; " # Tiny text but fills container? No, tiny text might be hard to select.
-                            # Let's try filling the box with text for easier selection
+                            f"font-size: 16px; " 
+                            f"font-family: monospace; "
                             f"overflow: hidden; "
                             f"user-select: text; "
                             f"display: flex; align-items: center; justify-content: center;"
