@@ -79,7 +79,6 @@ class OcrDocument(models.Model):
         try:
             image = Image.open(io.BytesIO(image_data))
             # Fix Orientation first if needed (keep consistent with server results)
-            # The server usually handles this, so we assume image_data matches box coords provided by server.
             
             width, height = image.size
             if width == 0 or height == 0: return ""
@@ -88,7 +87,8 @@ class OcrDocument(models.Model):
             b64_img = base64.b64encode(image_data).decode('utf-8')
             
             html_parts = []
-            html_parts.append(f'<div style="position: relative; width: 100%; max-width: {width}px; display: inline-block;">')
+            # Wrapper: line-height: 0 to prevent vertical gaps
+            html_parts.append(f'<div style="position: relative; display: inline-block; width: 100%; max-width: {width}px; line-height: 0;">')
             html_parts.append(f'<img src="data:image/png;base64,{b64_img}" style="width: 100%; height: auto; display: block;" />')
             
             pages = json_data.get('pages', [])
@@ -98,19 +98,32 @@ class OcrDocument(models.Model):
                     box = item.get('box')
                     text = item.get('text', '')
                     if box and text:
-                        # Box is [[x,y], [x,y], ...]. Calculate bounding rect.
+                        # Box is [[x,y], ...]. 
+                        # Use min/max to ensure rectangle validity
                         xs = [pt[0] for pt in box]
                         ys = [pt[1] for pt in box]
-                        min_x = min(xs)
-                        min_y = min(ys)
-                        w = max(xs) - min_x
-                        h = max(ys) - min_y
+                        min_x = max(0, min(xs))
+                        min_y = max(0, min(ys))
+                        # Clip max width/height
+                        max_x = min(width, max(xs))
+                        max_y = min(height, max(ys))
                         
-                        # Percentages for responsive scaling
+                        w = max_x - min_x
+                        h = max_y - min_y
+                        
+                        if w <= 0 or h <= 0: continue
+
+                        # Calculate Percentages
                         left_pct = (min_x / width) * 100
                         top_pct = (min_y / height) * 100
                         width_pct = (w / width) * 100
                         height_pct = (h / height) * 100
+                        
+                        # Style:
+                        # - line-height: normal to allow text selection height
+                        # - font-size: responsive-ish or fixed small but scale transform? 
+                        # - color: transparent (hidden text) BUT text-shadow or background color indicates box
+                        safe_text = text.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
                         
                         style = (
                             f"position: absolute; "
@@ -120,14 +133,21 @@ class OcrDocument(models.Model):
                             f"height: {height_pct:.2f}%; "
                             f"z-index: 10; "
                             f"cursor: text; "
-                            f"background-color: rgba(255, 0, 0, 0.2); " 
+                            f"background-color: rgba(255, 0, 0, 0.15); " 
+                            f"border: 1px solid rgba(255, 0, 0, 0.4); "
+                            f"box-sizing: border-box; "
+                            # Text styling for selection
                             f"color: transparent; "
-                            f"font-size: 10px; line-height: 10px; "
+                            f"font-size: 1px; " # Tiny text but fills container? No, tiny text might be hard to select.
+                            # Let's try filling the box with text for easier selection
+                            f"overflow: hidden; "
                             f"user-select: text; "
-                            f"white-space: nowrap; overflow: hidden;"
+                            f"display: flex; align-items: center; justify-content: center;"
                         )
                         
-                        safe_text = text.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+                        # We use title for hover text
+                        # We put text inside span for selection. 
+                        # Using a large font-size scaled to fit might be overkill, standard font size with overflow hidden works.
                         html_parts.append(f'<span style="{style}" title="{safe_text}">{safe_text}</span>')
             
             html_parts.append('</div>')
