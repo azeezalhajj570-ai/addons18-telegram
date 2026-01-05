@@ -220,8 +220,35 @@ class OcrDocument(models.Model):
             # Use Layout Detection?
             use_layout_detection = (self.scan_mode == 'document')
             
+            # --- NORMALIZATION STEP ---
+            # We must send the exact same image pixels to the API that we display in the UI.
+            # This handles EXIF rotation and file format consistency.
+            if self.mimetype == 'image':
+                try:
+                    # 1. Decode raw
+                    raw_data = base64.b64decode(self.file)
+                    img = Image.open(io.BytesIO(raw_data))
+                    
+                    # 2. Transpose (Fix Orientation)
+                    img = ImageOps.exif_transpose(img)
+                    
+                    # 3. Save to buffer as PNG (Lossless, safely handles transparency)
+                    norm_buffer = io.BytesIO()
+                    img.save(norm_buffer, format='PNG')
+                    
+                    # 4. Use this normalized data for the payload
+                    file_b64_str = base64.b64encode(norm_buffer.getvalue()).decode('utf-8')
+                    
+                except Exception as e:
+                    _logger.warning(f"Image normalization failed, falling back to raw: {e}")
+                    file_b64_str = self.file.decode('utf-8') if isinstance(self.file, bytes) else self.file
+            else:
+                # PDF or other - use raw
+                 file_b64_str = self.file.decode('utf-8') if isinstance(self.file, bytes) else self.file
+
+
             payload = {
-                "file_base64": self.file.decode('utf-8') if isinstance(self.file, bytes) else self.file,
+                "file_base64": file_b64_str,
                 "useLayoutDetection": use_layout_detection,
                 "fileType": file_type_val,
                 "useDocUnwarping": self.use_doc_unwarping,
