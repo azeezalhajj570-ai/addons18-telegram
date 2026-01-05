@@ -64,7 +64,7 @@
                                 <span class="badge text-bg-warning" invisible="not ocr_visualization_html">Hover to Select</span>
                             </div>
 
-                            <field name="ocr_visualization_html" widget="html" nolabel="1" options="{'style': 'width: 100%; border: 1px solid #eee; background: #fafafa;'}"/>
+                            <field name="ocr_visualization_html" widget="ocr_interactive" nolabel="1" options="{'style': 'width: 100%; border: 1px solid #eee; background: #fafafa;'}"/>
                             
                             <div invisible="ocr_visualization_html" class="text-muted text-center d-flex align-items-center justify-content-center" style="height: 400px; background: #f8f9fa; border: 1px dashed #dee2e6;">
                                 <span><i class="fa fa-magic"/> Scan document to generate interactive overlay</span>

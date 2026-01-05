@@ -14,5 +14,12 @@
     ],
     'installable': True,
     'application': True,
+    'assets': {
+        'web.assets_backend': [
+            'ocr/static/src/css/ocr_field.css',
+            'ocr/static/src/xml/ocr_field.xml',
+            'ocr/static/src/js/ocr_field.js',
+        ],
+    },
     'license': 'LGPL-3',
 }

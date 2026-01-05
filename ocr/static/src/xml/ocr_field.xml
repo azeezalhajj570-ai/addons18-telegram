@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ocr.OcrField">
+        <div class="o_field_ocr_interactive" t-ref="root" style="position: relative;">
+            <!-- Render the HTML content passed from the backend -->
+            <!-- We use t-out for HTML rendering (Odoo 17+) or t-raw (older) -->
+            <!-- The on-click handler catches bubbling events from word boxes -->
+            <div class="ocr-content-wrapper" t-on-click="onContainerClick" t-out="props.record.data[props.name] || ''"/>
+            
+            <!-- Context Menu (Action Box) -->
+            <!-- Positioned absolute relative to this root container -->
+            <t t-if="state.menuVisible">
+                <div class="ocr-action-box" t-att-style="'top:' + state.menuTop + 'px; left:' + state.menuLeft + 'px; transform: translate(-50%, -100%); margin-top: -8px;'">
+                    <button type="button" class="ant-btn ant-btn-text ant-btn-sm" t-on-click="copyText">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-right: 4px;">
+                            <path stroke="currentColor" stroke-linejoin="round" d="M2.5 4.5h9v9h-9z"></path>
+                            <path d="M4 2.5h9.5V12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    <div style="width: 1px; height: 12px; background: #e5e5e5; margin: 0 4px;"></div>
+                    <button type="button" class="ant-btn ant-btn-text ant-btn-sm" t-on-click="correctText">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-right: 4px;">
+                            <path d="M2.333 14h12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M3.667 8.907v2.426h2.439L13 4.436 10.565 2 3.667 8.907z" stroke="currentColor" stroke-linejoin="round"></path>
+                        </svg>
+                        <span>Correct</span>
+                    </button>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>
