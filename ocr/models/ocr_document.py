@@ -80,13 +80,18 @@ class OcrDocument(models.Model):
         """
         try:
             image = Image.open(io.BytesIO(image_data))
-            # Fix Orientation first if needed (keep consistent with server results)
+            
+            # Apply EXIF rotation to ensure PIL dimensions matches Visual dimensions
+            image = ImageOps.exif_transpose(image)
             
             width, height = image.size
             if width == 0 or height == 0: return ""
             
-            # Base64 for the image tag
-            b64_img = base64.b64encode(image_data).decode('utf-8')
+            # Save the normalized/rotated image to buffer for display
+            # This ensures the browser displays exactly what PIL measured
+            out_buffer = io.BytesIO()
+            image.save(out_buffer, format='PNG')
+            b64_img = base64.b64encode(out_buffer.getvalue()).decode('utf-8')
             
             html_parts = []
             
@@ -100,11 +105,16 @@ class OcrDocument(models.Model):
                     min-width: 100%;
                     line-height: 0;
                     user-select: none; /* Prevent selecting the image itself */
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
                 }
                 .ocr_image {
                     width: 100%; 
                     height: auto; 
                     display: block;
+                    margin: 0;
+                    padding: 0;
                 }
                 .ocr_word_box {
                     position: absolute;
@@ -113,7 +123,7 @@ class OcrDocument(models.Model):
                     box-sizing: border-box;
                     color: transparent;
                     font-size: 14px; 
-                    font-family: monospace;
+                    font-family: sans-serif;
                     overflow: hidden;
                     user-select: text; /* Allow text within box to be selected */
                     display: flex;
@@ -121,6 +131,9 @@ class OcrDocument(models.Model):
                     justify-content: center;
                     border: 1px solid rgba(0, 0, 0, 0.0); /* Invisible border usually */
                     transition: border-color 0.1s ease, background-color 0.1s ease;
+                    margin: 0;
+                    padding: 0;
+                    line-height: normal;
                 }
                 .ocr_word_box:hover {
                     background-color: rgba(255, 235, 59, 0.4); /* Yellow tint */
@@ -130,6 +143,8 @@ class OcrDocument(models.Model):
                     background: rgba(0, 100, 255, 0.3);
                     color: transparent; 
                 }
+                /* Selection fix for Firefox/Others */
+                .ocr_word_box::-moz-selection { background: rgba(0, 100, 255, 0.3); color: transparent; }
             </style>
             """)
 
