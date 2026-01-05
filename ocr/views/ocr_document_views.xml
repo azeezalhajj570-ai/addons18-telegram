@@ -30,58 +30,61 @@
                     </div>
                     
                     <div class="row">
-                        <!-- Left Column: Controls & Preview -->
-                        <div class="col-md-5">
-                            <group string="Configuration">
-                                <field name="scan_mode" widget="radio" options="{'horizontal': true}"/>
-                                
-                                <!-- Document Parsing Options -->
-                                <field name="use_doc_unwarping" invisible="scan_mode != 'document'"/>
-                                <field name="use_doc_orientation_classify" invisible="scan_mode != 'document'"/>
-                                <field name="use_chart_recognition" invisible="scan_mode != 'document'"/>
-                                
-                                <!-- Element Options -->
-                                <field name="element_type" invisible="scan_mode != 'element'"/>
+                        <!-- Left Column: Source Image -->
+                        <div class="col-md-6" style="border-right: 1px solid #ccc; padding-right: 15px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-muted">Source Image</strong>
+                            </div>
+                            
+                            <group invisible="1">
+                                <field name="mimetype" invisible="1"/>
+                                <field name="filename" invisible="1"/>
                             </group>
                             
-                            <separator string="Document Upload"/>
-                            <field name="mimetype" invisible="1"/>
-                            <field name="filename" invisible="1"/>
-                            <!-- Use standard binary with image preview -->
-                            <field name="file" filename="filename" widget="image" options="{'size': [0, 0]}" invisible="mimetype != 'image'" style="width: 100%; max-height: 500px; object-fit: contain; margin-top: 10px;"/>
-                            <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" style="height: 500px;"/>
-                            <field name="file" filename="filename" invisible="mimetype in ['image', 'pdf']"/>
+                            <!-- Source HTML (Identical structure to Right Side) -->
+                            <field name="ocr_source_html" widget="html" nolabel="1" options="{'style': 'height: 800px; width: 100%; overflow: auto; border: 1px solid #eee; background: #fafafa;'}" invisible="mimetype != 'image'"/>
+
+                            <!-- PDF Viewer Fallback -->
+                            <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" style="height: 800px; width: 100%;"/>
+                            
+                            <!-- Initial Fallback -->
+                            <div invisible="file" class="alert alert-info text-center mt-4">
+                                Please upload a document to begin.
+                            </div>
                         </div>
                         
-                        <!-- Right Column: Results Tabs -->
-                        <div class="col-md-7">
-                             <notebook>
-                                <page string="Markdown Preview">
-                                    <!-- Use html widget to render markdown (Odoo support is limited but let's try or use field widget) -->
-                                    <field name="ocr_markdown" widget="html" options="{'style': 'height: 600px; overflow-y: auto;'}"/>
-                                    <!-- Fallback prompt -->
-                                    <div invisible="ocr_markdown" class="text-muted text-center" style="padding: 20px;">
-                                        Please upload an image and click 'Scan / Parse'.
-                                    </div>
-                                </page>
-                                
-                                <page string="Visualization">
-                                    <field name="ocr_visualization_html" widget="html" nolabel="1" options="{'style': 'height: 800px; width: 100%; overflow: auto;'}"/>
-                                     <div invisible="ocr_visualization_html" class="text-muted text-center" style="padding: 20px;">
-                                        Visualization will appear here after scanning.
-                                    </div>
-                                </page>
-                                
-                                <page string="Markdown Source">
-                                    <field name="ocr_markdown" style="font-family: monospace; min-height: 500px;"/>
-                                </page>
-                                
-                                <page string="Raw JSON" groups="base.group_no_one">
-                                    <field name="ocr_json_response"/>
-                                </page>
-                            </notebook>
+                        <!-- Right Column: Interactive Result -->
+                        <div class="col-md-6" style="padding-left: 15px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-muted">Interactive Result</strong>
+                                <span class="badge text-bg-warning" invisible="not ocr_visualization_html">Hover to Select</span>
+                            </div>
+
+                            <field name="ocr_visualization_html" widget="html" nolabel="1" options="{'style': 'height: 800px; width: 100%; overflow: auto; border: 1px solid #eee; background: #fafafa;'}"/>
+                            
+                            <div invisible="ocr_visualization_html" class="text-muted text-center d-flex align-items-center justify-content-center" style="height: 400px; background: #f8f9fa; border: 1px dashed #dee2e6;">
+                                <span><i class="fa fa-magic"/> Scan document to generate interactive overlay</span>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Configuration and Raw Data (Below Fold) -->
+                    <group string="Configuration &amp; Data" col="4">
+                        <field name="scan_mode" widget="radio" options="{'horizontal': true}"/>
+                        <field name="use_doc_unwarping" invisible="scan_mode != 'document'"/>
+                        <field name="use_doc_orientation_classify" invisible="scan_mode != 'document'"/>
+                        <field name="use_chart_recognition" invisible="scan_mode != 'document'"/>
+                        <field name="element_type" invisible="scan_mode != 'element'"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Markdown Text">
+                            <field name="ocr_markdown" widget="html" options="{'style': 'height: 300px; overflow-y: auto;'}"/>
+                        </page>
+                        <page string="Raw JSON" groups="base.group_no_one">
+                            <field name="ocr_json_response"/>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>

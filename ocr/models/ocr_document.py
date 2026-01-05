@@ -40,6 +40,7 @@ class OcrDocument(models.Model):
 
     # Output Fields
     ocr_markdown = fields.Text(string="Markdown Source")
+    ocr_source_html = fields.Html(string="Source HTML", sanitize=False) # For identical left-side rendering
     ocr_visualization_html = fields.Html(string="Visualization HTML", sanitize=False)  # For interactive overlay
 
 
@@ -72,9 +73,10 @@ class OcrDocument(models.Model):
         ], limit=1)
         return attachment
 
-    def _generate_interactive_overlay(self, image_data, json_data):
+    def _generate_interactive_overlay(self, image_data, json_data, include_boxes=True):
         """
         Generate HTML overlay for interactive text selection.
+        If include_boxes is False, returns only the image container (for Source View).
         """
         try:
             image = Image.open(io.BytesIO(image_data))
@@ -87,68 +89,92 @@ class OcrDocument(models.Model):
             b64_img = base64.b64encode(image_data).decode('utf-8')
             
             html_parts = []
-            # Wrapper: line-height: 0 to prevent vertical gaps
-            html_parts.append(f'<div style="position: relative; display: inline-block; width: 100%; max-width: {width}px; line-height: 0;">')
-            html_parts.append(f'<img src="data:image/png;base64,{b64_img}" style="width: 100%; height: auto; display: block;" />')
             
-            pages = json_data.get('pages', [])
-            for page in pages:
-                items = page.get('items', [])
-                for item in items:
-                    box = item.get('box')
-                    text = item.get('text', '')
-                    if box and text:
-                        # Box is [[x,y], ...]. 
-                        # Use min/max to ensure rectangle validity
-                        xs = [pt[0] for pt in box]
-                        ys = [pt[1] for pt in box]
-                        min_x = max(0, min(xs))
-                        min_y = max(0, min(ys))
-                        # Clip max width/height
-                        max_x = min(width, max(xs))
-                        max_y = min(height, max(ys))
-                        
-                        w = max_x - min_x
-                        h = max_y - min_y
-                        
-                        if w <= 0 or h <= 0: continue
+            # Common Style Block (ensure it's present in both to keep DOM weight similar, though mostly for boxes)
+            html_parts.append("""
+            <style>
+                .ocr_container {
+                    position: relative; 
+                    display: inline-block; 
+                    width: 100%; 
+                    min-width: 100%;
+                    line-height: 0;
+                    user-select: none; /* Prevent selecting the image itself */
+                }
+                .ocr_image {
+                    width: 100%; 
+                    height: auto; 
+                    display: block;
+                }
+                .ocr_word_box {
+                    position: absolute;
+                    z-index: 10;
+                    cursor: text;
+                    box-sizing: border-box;
+                    color: transparent;
+                    font-size: 14px; 
+                    font-family: monospace;
+                    overflow: hidden;
+                    user-select: text; /* Allow text within box to be selected */
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid rgba(0, 0, 0, 0.0); /* Invisible border usually */
+                    transition: border-color 0.1s ease, background-color 0.1s ease;
+                }
+                .ocr_word_box:hover {
+                    background-color: rgba(255, 235, 59, 0.4); /* Yellow tint */
+                    border: 1px solid rgba(255, 0, 0, 0.8);
+                }
+                .ocr_word_box::selection {
+                    background: rgba(0, 100, 255, 0.3);
+                    color: transparent; 
+                }
+            </style>
+            """)
 
-                        # Calculate Percentages
-                        left_pct = (min_x / width) * 100
-                        top_pct = (min_y / height) * 100
-                        width_pct = (w / width) * 100
-                        height_pct = (h / height) * 100
-                        
-                        # Style:
-                        # - line-height: normal to allow text selection height
-                        # - font-size: responsive-ish or fixed small but scale transform? 
-                        # - color: transparent (hidden text) BUT text-shadow or background color indicates box
-                        safe_text = text.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-                        
-                        style = (
-                            f"position: absolute; "
-                            f"left: {left_pct:.2f}%; "
-                            f"top: {top_pct:.2f}%; "
-                            f"width: {width_pct:.2f}%; "
-                            f"height: {height_pct:.2f}%; "
-                            f"z-index: 10; "
-                            f"cursor: text; "
-                            f"background-color: rgba(255, 0, 0, 0.15); " 
-                            f"border: 1px solid rgba(255, 0, 0, 0.4); "
-                            f"box-sizing: border-box; "
-                            # Text styling for selection
-                            f"color: transparent; "
-                            f"font-size: 16px; " 
-                            f"font-family: monospace; "
-                            f"overflow: hidden; "
-                            f"user-select: text; "
-                            f"display: flex; align-items: center; justify-content: center;"
-                        )
-                        
-                        # We use title for hover text
-                        # We put text inside span for selection. 
-                        # Using a large font-size scaled to fit might be overkill, standard font size with overflow hidden works.
-                        html_parts.append(f'<span style="{style}" title="{safe_text}">{safe_text}</span>')
+            # Wrapper
+            html_parts.append(f'<div class="ocr_container" style="max-width: {width}px;">')
+            html_parts.append(f'<img class="ocr_image" src="data:image/png;base64,{b64_img}" />')
+            
+            if include_boxes:
+                pages = json_data.get('pages', [])
+                for page in pages:
+                    items = page.get('items', [])
+                    for item in items:
+                        box = item.get('box')
+                        text = item.get('text', '')
+                        if box and text:
+                            # Box is [[x,y], ...]. 
+                            xs = [pt[0] for pt in box]
+                            ys = [pt[1] for pt in box]
+                            # Simple bounding box
+                            min_x = max(0, min(xs))
+                            min_y = max(0, min(ys))
+                            max_x = min(width, max(xs))
+                            max_y = min(height, max(ys))
+                            
+                            w = max_x - min_x
+                            h = max_y - min_y
+                            
+                            if w <= 0 or h <= 0: continue
+
+                            # Calculate Percentages
+                            left_pct = (min_x / width) * 100
+                            top_pct = (min_y / height) * 100
+                            width_pct = (w / width) * 100
+                            height_pct = (h / height) * 100
+                            
+                            safe_text = text.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+                            
+                            style = (
+                                f"left: {left_pct:.3f}%; "
+                                f"top: {top_pct:.3f}%; "
+                                f"width: {width_pct:.3f}%; "
+                                f"height: {height_pct:.3f}%; "
+                            )
+                            
+                            html_parts.append(f'<span class="ocr_word_box" style="{style}" title="{safe_text}">{safe_text}</span>')
             
             html_parts.append('</div>')
             return "".join(html_parts)
@@ -222,29 +248,31 @@ class OcrDocument(models.Model):
                 'ocr_confidence': 1.0
             })
             
-            # Generate Overlay?
-            # If backend logic allows returning boxes, standard overlay might work.
-            # But with advanced layout parsing, structure changes.
-            # Let's keep logic simple: try to draw boxes if possible, otherwise skip safely.
             # Generate Interactive Overlay
             if self.mimetype == 'image':
                 try:
-                    if 'pages' in result:
-                         file_data = base64.b64decode(self.file)
-                         # Generate HTML overlay
-                         overlay_html = self._generate_interactive_overlay(file_data, result)
-                         self.ocr_visualization_html = overlay_html
-                         # We can also keep annotated_file logic if needed, but HTML takes precedence in UI now.
-                         # self.annotated_file = ... (skipping to save space/performance)
+                    file_data = base64.b64decode(self.file)
+                    
+                    # 1. Generate Result (Right Side)
+                    overlay_html = self._generate_interactive_overlay(file_data, result, include_boxes=True)
+                    
+                    # 2. Generate Source (Left Side) - identical container/image but no boxes
+                    source_html = self._generate_interactive_overlay(file_data, result, include_boxes=False)
+                    
+                    self.write({
+                        'ocr_visualization_html': overlay_html,
+                        'ocr_source_html': source_html
+                    })
+                        
                 except Exception as e:
-                    _logger.warning(f"Overlay generation skipped or failed: {e}")
+                     _logger.warning(f"Overlay generation skipped or failed: {e}")
             
         except Exception as e:
             _logger.error(f"OCR Advanced Scan Failed: {e}")
             raise UserError(_(f"OCR Scan Failed: {e}"))
-
-        # Return reload action to refresh the form
+            
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
+
