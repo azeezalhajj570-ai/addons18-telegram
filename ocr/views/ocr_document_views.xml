@@ -85,8 +85,22 @@
                         <page string="Markdown Text">
                             <field name="ocr_markdown" widget="html" options="{'style': 'height: 300px; overflow-y: auto;'}"/>
                         </page>
-                        <page string="Raw JSON" groups="base.group_no_one">
-                            <field name="ocr_json_response"/>
+                        <page string="JSON Output">
+                             <group>
+                                <field name="ocr_json_filename" invisible="1"/>
+                                <div class="alert alert-info" role="alert" invisible="not ocr_json_file">
+                                    <h4 class="alert-heading">JSON Analysis Ready</h4>
+                                    <p>Download the full structural analysis containing text, coordinates, and confidence scores.</p>
+                                    <hr/>
+                                    <field name="ocr_json_file" filename="ocr_json_filename" widget="binary" readonly="1"/>
+                                </div>
+                                <div invisible="ocr_json_file" class="text-muted">
+                                    No JSON analysis available yet. Scan a document to generate.
+                                </div>
+                            </group>
+                            <group string="Raw Content" groups="base.group_no_one">
+                                <field name="ocr_json_response"/>
+                            </group>
                         </page>
                     </notebook>
                 </sheet>

@@ -42,7 +42,10 @@ class OcrDocument(models.Model):
     ocr_markdown = fields.Text(string="Markdown Source")
     ocr_source_html = fields.Html(string="Source HTML", sanitize=False) # For identical left-side rendering
     ocr_visualization_html = fields.Html(string="Visualization HTML", sanitize=False)  # For interactive overlay
-
+    
+    # Download Fields
+    ocr_json_file = fields.Binary(string="JSON Output File", attachment=True)
+    ocr_json_filename = fields.Char(string="JSON Filename")
 
     @api.depends('filename', 'file')
     def _compute_mimetype(self):
@@ -189,7 +192,113 @@ class OcrDocument(models.Model):
                                 f"height: {height_pct:.3f}%; "
                             )
                             
-                            html_parts.append(f'<span class="ocr_word_box" style="{style}" title="{safe_text}">{safe_text}</span>')
+                            html_parts.append(f'<span class="ocr_word_box" style="{style}" title="{safe_text}" data-text="{safe_text}" onclick="showOcrMenu(this, event)">{safe_text}</span>')
+            
+            # --- ACTION BOX & SCRIPTS ---
+            # Injecting the User's Action Box HTML and logic
+            html_parts.append("""
+            <div id="ocr_action_menu" class="ocr-action-box" style="display: none;">
+                <button type="button" class="ocr-btn" onclick="copyOcrText()">
+                    <i class="fa fa-clone"></i> <span>Copy</span>
+                </button>
+                <button type="button" class="ocr-btn" onclick="correctOcrText()">
+                    <i class="fa fa-pencil"></i> <span>Correct</span>
+                </button>
+            </div>
+            
+            <style>
+                .ocr-action-box {
+                    position: absolute;
+                    z-index: 100;
+                    background: white;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                    padding: 4px;
+                    display: flex;
+                    gap: 4px;
+                    border: 1px solid #eee;
+                    transform: translate(-50%, -120%); /* Center above click */
+                    pointer-events: auto;
+                }
+                .ocr-btn {
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 13px;
+                    color: #333;
+                    transition: background 0.2s;
+                }
+                .ocr-btn:hover {
+                    background: #f0f0f0;
+                    color: #1677ff;
+                }
+                .ocr-btn i {
+                    font-size: 12px;
+                }
+            </style>
+
+            <script>
+                var currentTargetBox = null;
+
+                function showOcrMenu(element, event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    
+                    currentTargetBox = element;
+                    var menu = document.getElementById('ocr_action_menu');
+                    
+                    // Position menu above the clicked element
+                    // We need relative position to the container
+                    var rect = element.getBoundingClientRect();
+                    var containerRect = element.parentElement.getBoundingClientRect();
+                    
+                    var relTop = element.offsetTop;
+                    var relLeft = element.offsetLeft + (element.offsetWidth / 2);
+                    
+                    menu.style.top = relTop + 'px';
+                    menu.style.left = relLeft + 'px';
+                    menu.style.display = 'flex';
+                }
+
+                function copyOcrText() {
+                    if (!currentTargetBox) return;
+                    var text = currentTargetBox.getAttribute('data-text');
+                    navigator.clipboard.writeText(text).then(function() {
+                        var menu = document.getElementById('ocr_action_menu');
+                        menu.style.display = 'none';
+                        // Optional feedback
+                        currentTargetBox.style.outline = "2px solid #52c41a";
+                        setTimeout(() => currentTargetBox.style.outline = "none", 500);
+                    });
+                }
+
+                function correctOcrText() {
+                    if (!currentTargetBox) return;
+                    var oldText = currentTargetBox.getAttribute('data-text');
+                    var newText = prompt("Correct OCR Text:", oldText);
+                    if (newText !== null && newText !== oldText) {
+                        currentTargetBox.innerText = newText;
+                        currentTargetBox.setAttribute('data-text', newText);
+                        currentTargetBox.title = newText;
+                        document.getElementById('ocr_action_menu').style.display = 'none';
+                        // Note: This is visual only, does not save to backend yet
+                    }
+                }
+                
+                // Close menu when clicking elsewhere
+                document.addEventListener('click', function(e) {
+                    var menu = document.getElementById('ocr_action_menu');
+                    if (menu && e.target.closest('.ocr-action-box') === null && e.target.closest('.ocr_word_box') === null) {
+                        menu.style.display = 'none';
+                    }
+                });
+            </script>
+            """)
             
             html_parts.append('</div>')
             return "".join(html_parts)
@@ -283,10 +392,17 @@ class OcrDocument(models.Model):
             if not md_text:
                 md_text = result.get('text') or result.get('content') or json.dumps(result, indent=2, ensure_ascii=False)
 
+            # JSON File Generation
+            json_str = json.dumps(result, indent=2, ensure_ascii=False)
+            json_bytes = json_str.encode('utf-8')
+            json_b64 = base64.b64encode(json_bytes)
+
             self.write({
                 'ocr_raw_text': md_text,
                 'ocr_markdown': md_text,
-                'ocr_json_response': json.dumps(result, indent=2, ensure_ascii=False),
+                'ocr_json_response': json_str,
+                'ocr_json_file': json_b64,
+                'ocr_json_filename': f"{self.filename or 'ocr_result'}.json",
                 'ocr_confidence': 1.0
             })
             
