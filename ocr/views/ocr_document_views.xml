@@ -47,9 +47,12 @@
                             <!-- PDF Viewer Fallback -->
                             <field name="file" filename="filename" widget="pdf_viewer" invisible="mimetype != 'pdf'" style="height: 800px; width: 100%;"/>
                             
-                            <!-- Initial Fallback -->
-                            <div invisible="file" class="alert alert-info text-center mt-4">
-                                Please upload a document to begin.
+                            <!-- Initial Fallback / Upload Widget -->
+                            <!-- Show standard file upload widget if no file is present -->
+                            <div invisible="file" class="text-center mt-4 p-4" style="border: 2px dashed #ccc; border-radius: 8px; background: #f8f9fa;">
+                                <div class="mb-3"><i class="fa fa-cloud-upload fa-3x text-muted"/></div>
+                                <div class="mb-2"><strong>Upload Document</strong></div>
+                                <field name="file" filename="filename" widget="binary" nolabel="1"/>
                             </div>
                         </div>
                         
