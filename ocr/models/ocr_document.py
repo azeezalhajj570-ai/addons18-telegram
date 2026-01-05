@@ -196,13 +196,23 @@ class OcrDocument(models.Model):
             
             # --- ACTION BOX & SCRIPTS ---
             # Injecting the User's Action Box HTML and logic
+            # Using SVGs and structure provided by user to match styling
             html_parts.append("""
             <div id="ocr_action_menu" class="ocr-action-box" style="display: none;">
-                <button type="button" class="ocr-btn" onclick="copyOcrText()">
-                    <i class="fa fa-clone"></i> <span>Copy</span>
+                <button type="button" class="ant-btn ant-btn-text ant-btn-sm" onclick="copyOcrText()">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-right: 4px;">
+                        <path stroke="currentColor" stroke-linejoin="round" d="M2.5 4.5h9v9h-9z"></path>
+                        <path d="M4 2.5h9.5V12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <span>Copy</span>
                 </button>
-                <button type="button" class="ocr-btn" onclick="correctOcrText()">
-                    <i class="fa fa-pencil"></i> <span>Correct</span>
+                <div style="width: 1px; height: 12px; background: #e5e5e5; margin: 0 4px;"></div>
+                <button type="button" class="ant-btn ant-btn-text ant-btn-sm" onclick="correctOcrText()">
+                    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon" style="margin-right: 4px;">
+                        <path d="M2.333 14h12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M3.667 8.907v2.426h2.439L13 4.436 10.565 2 3.667 8.907z" stroke="currentColor" stroke-linejoin="round"></path>
+                    </svg>
+                    <span>Correct</span>
                 </button>
             </div>
             
@@ -211,34 +221,37 @@ class OcrDocument(models.Model):
                     position: absolute;
                     z-index: 100;
                     background: white;
-                    border-radius: 4px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                    border-radius: 6px;
+                    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
                     padding: 4px;
                     display: flex;
-                    gap: 4px;
-                    border: 1px solid #eee;
-                    transform: translate(-50%, -120%); /* Center above click */
+                    align-items: center;
+                    border: 1px solid #f0f0f0;
+                    transform: translate(-50%, -115%); /* Center above click */
                     pointer-events: auto;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
                 }
-                .ocr-btn {
+                .ant-btn {
                     border: none;
                     background: transparent;
                     cursor: pointer;
-                    padding: 4px 8px;
+                    padding: 0 7px;
                     border-radius: 4px;
                     display: flex;
                     align-items: center;
-                    gap: 6px;
-                    font-size: 13px;
-                    color: #333;
-                    transition: background 0.2s;
+                    font-size: 14px;
+                    height: 24px;
+                    color: rgba(0, 0, 0, 0.88);
+                    transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+                    line-height: 1.5715;
                 }
-                .ocr-btn:hover {
-                    background: #f0f0f0;
-                    color: #1677ff;
+                .ant-btn:hover {
+                    background: rgba(0, 0, 0, 0.06);
                 }
-                .ocr-btn i {
-                    font-size: 12px;
+                .ant-btn .icon {
+                    font-size: 14px;
+                    display: inline-flex;
+                    align-items: center;
                 }
             </style>
 
@@ -253,8 +266,6 @@ class OcrDocument(models.Model):
                     var menu = document.getElementById('ocr_action_menu');
                     
                     // Position menu above the clicked element
-                    // We need relative position to the container
-                    var rect = element.getBoundingClientRect();
                     var containerRect = element.parentElement.getBoundingClientRect();
                     
                     var relTop = element.offsetTop;
@@ -271,9 +282,9 @@ class OcrDocument(models.Model):
                     navigator.clipboard.writeText(text).then(function() {
                         var menu = document.getElementById('ocr_action_menu');
                         menu.style.display = 'none';
-                        // Optional feedback
-                        currentTargetBox.style.outline = "2px solid #52c41a";
-                        setTimeout(() => currentTargetBox.style.outline = "none", 500);
+                        // Feedback
+                        currentTargetBox.style.backgroundColor = "rgba(82, 196, 26, 0.4)"; // Green tint
+                        setTimeout(() => currentTargetBox.style.backgroundColor = "", 300);
                     });
                 }
 
@@ -286,7 +297,6 @@ class OcrDocument(models.Model):
                         currentTargetBox.setAttribute('data-text', newText);
                         currentTargetBox.title = newText;
                         document.getElementById('ocr_action_menu').style.display = 'none';
-                        // Note: This is visual only, does not save to backend yet
                     }
                 }
                 
